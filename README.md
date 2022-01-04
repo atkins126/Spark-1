@@ -39,9 +39,9 @@ Its robust, designed for easy use and suitable for making all types of 2D games 
 - Unzip the archive to a desired location.
 - Add `installdir\sources`, folder to Delphi's library path so Spark source files can be found for any project or for a specific project add to its search path.
 - See examples in the `installdir\examples` for more information about usage.
-- Compile and the `ZipArc` utility for making **.ZIP** files (standard compressed zip format). Running the `makearc.bat` in `installdir\bin` will build `Data.arc` that is used by the examples.
+- Compile and the `ZipArc` utility for making `.ZIP` files (standard compressed zip format). Running the `makearc.bat` in `installdir\bin` will build `Data.zip` that is used by the examples.
 - Build and run the examples to showcase many of the features and capabilities of the library.
-- There are no other dependencies required other than what is used by your own projects such as your **.ZIP** archive files.
+- There are no other dependencies required other than what is used by your own projects such as your `.ZIP` archive files.
 
 ## Known Issues
 - This project is in active development so changes will be frequent, but should be very stable. 
