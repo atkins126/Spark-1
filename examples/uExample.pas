@@ -83,7 +83,7 @@ implementation
 { Routines }
 procedure RunExample;
 begin
-  RunGame(TBaseExample);
+  RunGame(TExample);
 end;
 
 { TExample }

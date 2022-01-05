@@ -724,6 +724,16 @@ type
       Password: string;
       Filename: string;
     end;
+    // Video
+    FVideo: record
+      Voice: PALLEGRO_VOICE;
+      Mixer: PALLEGRO_MIXER;
+      Handle: PALLEGRO_VIDEO;
+      Loop: Boolean;
+      Playing: Boolean;
+      Paused: Boolean;
+      Filename: string;
+    end;
     FFontList: TDictionary<Int64, TFont>;
     FBitmapList: TDictionary<Int64, TBitmap>;
     FViewportList: TDictionary<Int64, TViewport>;
@@ -739,6 +749,7 @@ type
     class function  HasConsoleOutput: Boolean;
     procedure OpenLog;
     procedure CloseLog;
+    procedure VideoFinishedEvent(aHandle: PALLEGRO_VIDEO);
   public
     property Settings: TSettings read FSettings;
     property MousePos: TVector read FMousePos;
@@ -939,6 +950,23 @@ type
     procedure StopAllSamples;
     function  IsSamplePlaying(aID: TSampleID): Boolean;
 
+    // Video
+    procedure LoadVideo(const aFilename: string);
+    procedure UnloadVideo;
+    function  IsVideoPaused: Boolean;
+    procedure PauseVideo(aPause: Boolean);
+    function  IsVideoLooping:  Boolean;
+    procedure SetVideoLooping(aLoop: Boolean);
+    function  IsVideoPlaying: Boolean;
+    procedure SetVideoPlaying(aPlay: Boolean);
+    function  GetVideoFilename: string;
+    procedure PlayVideo(const aFilename: string; aLoop: Boolean; aGain: Single); overload;
+    procedure PlayVideo(aLoop: Boolean; aGain: Single); overload;
+    procedure DrawVideo(aX: Single; aY: Single);
+    procedure GetVideoSize(aWidth: PSingle; aHeight: PSingle);
+    procedure SeekVideo(aPos: Single);
+    procedure RewindVideo;
+
     // Game
     procedure SetTerminated(aTerminated: Boolean);
     function  GetTerminated: Boolean;
@@ -952,6 +980,9 @@ type
     procedure OnRenderFrame; virtual;
     procedure OnRenderHUD; virtual;
     procedure OnShowFrame; virtual;
+    procedure OnLoadVideo(const aFilename: string); virtual;
+    procedure OnUnloadVideo(const aFilename: string); virtual;
+    procedure OnVideoFinished(const aFilename: string); virtual;
     procedure Run;
   end;
 
@@ -3969,6 +4000,228 @@ begin
   end;
 end;
 
+// Video
+procedure TGame.LoadVideo(const aFilename: string);
+var
+  LMarsheller: TMarshaller;
+  LFilename: string;
+begin
+  LFilename := aFilename;
+  if LFilename.IsEmpty then  Exit;
+
+  if not al_filename_exists(LMarsheller.AsUtf8(LFilename).ToPointer) then
+  begin
+    Log('Video file was not found: %s', [LFilename]);
+    Exit;
+  end;
+
+  UnloadVideo;
+
+  if al_is_audio_installed then
+  begin
+    if FVideo.Voice = nil then
+    begin
+      FVideo.Voice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+      FVideo.Mixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
+      al_attach_mixer_to_voice(FVideo.Mixer, FVideo.Voice);
+    end;
+  end;
+
+  FVideo.Handle := al_open_video(LMarsheller.AsAnsi(LFilename).ToPointer);
+  if FVideo.Handle <> nil then
+  begin
+    al_register_event_source(FQueue, al_get_video_event_source(FVideo.Handle));
+    al_set_video_playing(FVideo.Handle, False);
+    FVideo.Filename := aFilename;
+    OnLoadVideo(FVideo.Filename);
+  end;
+end;
+
+procedure TGame.UnloadVideo;
+begin
+  if FVideo.Handle <> nil then
+  begin
+    OnUnloadVideo(FVideo.Filename);
+    al_set_video_playing(FVideo.Handle, False);
+    al_unregister_event_source(FQueue, al_get_video_event_source(FVideo.Handle));
+    al_close_video(FVideo.Handle);
+
+    if al_is_audio_installed then
+    begin
+      if FVideo.Voice = nil then
+      begin
+        FVideo.Voice := al_create_voice(44100, ALLEGRO_AUDIO_DEPTH_INT16, ALLEGRO_CHANNEL_CONF_2);
+        FVideo.Mixer := al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
+        al_attach_mixer_to_voice(FVideo.Mixer, FVideo.Voice);
+      end;
+    end;
+
+    FVideo.Handle := nil;
+    FVideo.Filename := '';
+    FVideo.Loop := False;
+    FVideo.Playing := False;
+    FVideo.Paused := False;
+  end;
+end;
+
+function  TGame.IsVideoPaused: Boolean;
+begin
+  Result := FVideo.Paused;
+end;
+
+procedure TGame.PauseVideo(aPause: Boolean);
+begin
+  // if not FPlaying then Exit;
+  if FVideo.Handle = nil then Exit;
+
+  // if trying to pause and video is not playing, just exit
+  if (aPause = True) then
+  begin
+    if not al_is_video_playing(FVideo.Handle) then
+    Exit;
+  end;
+
+  // if trying to unpause without first being paused, just exit
+  if (aPause = False) then
+  begin
+    if FVideo.Paused = False then
+      Exit;
+  end;
+
+  al_set_video_playing(FVideo.Handle, not aPause);
+  FVideo.Paused := aPause;
+end;
+
+function  TGame.IsVideoLooping:  Boolean;
+begin
+  Result := FVideo.Loop;
+end;
+
+procedure TGame.SetVideoLooping(aLoop: Boolean);
+begin
+  FVideo.Loop := aLoop;
+end;
+
+function  TGame.IsVideoPlaying: Boolean;
+begin
+  if FVideo.Handle = nil then
+    Result := False
+  else
+    Result := al_is_video_playing(FVideo.Handle);
+end;
+
+procedure TGame.SetVideoPlaying(aPlay: Boolean);
+begin
+  if FVideo.Handle = nil then Exit;
+  if FVideo.Paused then Exit;
+  al_set_video_playing(FVideo.Handle, aPlay);
+  FVideo.Playing := aPlay;
+  FVideo.Paused := False;
+end;
+
+function  TGame.GetVideoFilename: string;
+begin
+  Result := FVideo.Filename;
+end;
+
+procedure TGame.PlayVideo(const aFilename: string; aLoop: Boolean; aGain: Single);
+begin
+  LoadVideo(aFilename);
+  PlayVideo(aLoop, aGain);
+end;
+
+procedure TGame.PlayVideo(aLoop: Boolean; aGain: Single);
+begin
+  if FVideo.Handle = nil then Exit;
+  al_start_video(FVideo.Handle, FVideo.Mixer);
+  al_set_mixer_gain(FVideo.Mixer, aGain);
+  al_set_video_playing(FVideo.Handle, True);
+  FVideo.Loop := aLoop;
+  FVideo.Playing := True;
+  FVideo.Paused := False;
+end;
+
+procedure TGame.DrawVideo(aX: Single; aY: Single);
+var
+  LFrame: PALLEGRO_BITMAP;
+  LSize: TVector;
+  LScaled: TVector;
+  LWidth: Single;
+  LHeight: Single;
+  LViewportSize: TRectangle;
+begin
+  if FVideo.Handle = nil then Exit;
+  if (not IsVideoPlaying) and (not FVideo.Paused) then Exit;
+
+  LFrame := al_get_video_frame(FVideo.Handle);
+  if LFrame <> nil then
+  begin
+    GetWindowViewportSize(LViewportSize);
+    LSize.X := al_get_bitmap_width(LFrame);
+    LSize.Y := al_get_bitmap_height(LFrame);
+    LScaled.X := al_get_video_scaled_width(FVideo.Handle);
+    LScaled.Y := al_get_video_scaled_height(FVideo.Handle);
+
+    if LSize.X > LViewportSize.Width then
+      LScaled.X := LViewportSize.Width;
+
+    if LSize.Y > LViewportSize.Height then
+      LScaled.Y := LViewportSize.Height;
+
+    al_draw_scaled_bitmap(LFrame, 0, 0,
+      LSize.X,
+      LSize.Y,
+      aX, aY,
+      LScaled.X,
+      LScaled.Y,
+      0);
+  end;
+end;
+
+procedure TGame.GetVideoSize(aWidth: PSingle; aHeight: PSingle);
+begin
+  if FVideo.Handle = nil then
+  begin
+    if aWidth <> nil then
+      aWidth^ := 0;
+    if aHeight <> nil then
+      aHeight^ := 0;
+    Exit;
+  end;
+  if aWidth <> nil then
+    aWidth^ := al_get_video_scaled_width(FVideo.Handle);
+  if aHeight <> nil then
+    aHeight^ := al_get_video_scaled_height(FVideo.Handle);
+end;
+
+procedure TGame.SeekVideo(aPos: Single);
+begin
+  if FVideo.Handle = nil then Exit;
+  al_seek_video(FVideo.Handle, aPos);
+end;
+
+procedure TGame.RewindVideo;
+begin
+  if FVideo.Handle = nil then Exit;
+  al_seek_video(FVideo.Handle, 0);
+end;
+
+procedure TGame.VideoFinishedEvent(aHandle: PALLEGRO_VIDEO);
+begin
+  if FVideo.Handle <> aHandle then Exit;
+  RewindVideo;
+  if FVideo.Loop then
+    begin
+      //Rewind;
+      if not FVideo.Paused then
+        SetVideoPlaying(True);
+    end
+  else
+    begin
+      OnVideoFinished(FVideo.Filename);
+    end;
+end;
+
 // Game
 procedure TGame.SetTerminated(aTerminated: Boolean);
 begin
@@ -4052,6 +4305,18 @@ begin
   ShowWindow;
 end;
 
+procedure TGame.OnLoadVideo(const aFilename: string);
+begin
+end;
+
+procedure TGame.OnUnloadVideo(const aFilename: string);
+begin
+end;
+
+procedure TGame.OnVideoFinished(const aFilename: string);
+begin
+end;
+
 procedure TGame.Run;
 begin
   FTerminated := True;
@@ -4103,6 +4368,9 @@ begin
               // pause audio
               PauseAudio(True);
 
+              // pause Video
+              PauseVideo(True);
+
               // display not ready
               FWindow.Ready := False;
             end;
@@ -4117,6 +4385,9 @@ begin
 
               // unpause audio
               PauseAudio(False);
+
+              // unpause video
+              PauseVideo(False);
 
               // display ready
               FWindow.Ready := True;
@@ -4155,6 +4426,7 @@ begin
 
           ALLEGRO_EVENT_VIDEO_FINISHED:
             begin
+              VideoFinishedEvent(PALLEGRO_VIDEO(FEvent.user.data1));
             end;
 
         end;
@@ -4182,6 +4454,10 @@ begin
   finally
     ClearInput;
     ClearAudio;
+    UnloadAllFonts;
+    UnloadAllBitmaps;
+    UnloadAllSamples;
+    UnloadVideo;
     OnShutdown;
     OnSaveConfig;
   end;

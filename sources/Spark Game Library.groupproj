@@ -21,6 +21,9 @@
         <Projects Include="..\examples\Viewport.dproj">
             <Dependencies/>
         </Projects>
+        <Projects Include="..\examples\Video.dproj">
+            <Dependencies/>
+        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -83,14 +86,23 @@
     <Target Name="Viewport:Make">
         <MSBuild Projects="..\examples\Viewport.dproj" Targets="Make"/>
     </Target>
+    <Target Name="Video">
+        <MSBuild Projects="..\examples\Video.dproj"/>
+    </Target>
+    <Target Name="Video:Clean">
+        <MSBuild Projects="..\examples\Video.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Video:Make">
+        <MSBuild Projects="..\examples\Video.dproj" Targets="Make"/>
+    </Target>
     <Target Name="Build">
-        <CallTarget Targets="ZipArc;Font;Music;Sample;Bitmap;Viewport"/>
+        <CallTarget Targets="ZipArc;Font;Music;Sample;Bitmap;Viewport;Video"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="ZipArc:Clean;Font:Clean;Music:Clean;Sample:Clean;Bitmap:Clean;Viewport:Clean"/>
+        <CallTarget Targets="ZipArc:Clean;Font:Clean;Music:Clean;Sample:Clean;Bitmap:Clean;Viewport:Clean;Video:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="ZipArc:Make;Font:Make;Music:Make;Sample:Make;Bitmap:Make;Viewport:Make"/>
+        <CallTarget Targets="ZipArc:Make;Font:Make;Music:Make;Sample:Make;Bitmap:Make;Viewport:Make;Video:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>
