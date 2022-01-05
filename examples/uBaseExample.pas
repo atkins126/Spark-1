@@ -51,21 +51,17 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ============================================================================= }
 
-unit uSample;
+unit uBaseExample;
 
 interface
 
 uses
-  System.SysUtils,
-  Spark,
-  uBaseExample;
+  Spark;
 
 type
-  { TExample }
-  TExample = class(TBaseExample)
+  { TBaseExample }
+  TBaseExample = class(TGame)
   protected
-    FSamples: array[ 0..8 ] of Int64;
-    FSampleId: TSampleID;
   public
     procedure OnGetSettings(var aSettings: TGame.TSettings); override;
     procedure OnLoadConfig; override;
@@ -79,111 +75,59 @@ type
     procedure OnShowFrame; override;
   end;
 
-{ Routines }
-procedure RunExample;
-
 implementation
 
-{ Routines }
-procedure RunExample;
-begin
-  RunGame(TExample);
-end;
-
-{ TExample }
-procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+{ TBaseExample }
+procedure TBaseExample.OnGetSettings(var aSettings: TGame.TSettings);
 begin
   inherited;
-  aSettings.WindowTitle := 'Sample Example';
+  aSettings.WindowTitle := 'Spark Example';
+  aSettings.ArchivePassword := 'a15bef2d07b24a589c3d78d5ba341a94';
+  aSettings.ArchiveFilename := 'Data.zip';
 end;
 
-procedure TExample.OnLoadConfig;
+procedure TBaseExample.OnLoadConfig;
 begin
   inherited;
 end;
 
-procedure TExample.OnSaveConfig;
+procedure TBaseExample.OnSaveConfig;
 begin
   inherited;
 end;
 
-procedure TExample.OnStartup;
-begin
-  inherited;
-  for var I := 0 to 5 do
-    FSamples[I] := LoadSample(Format('arc/audio/sfx/samp%d.ogg', [I]));
-  FSamples[6] := LoadSample('arc/audio/sfx/weapon_player.ogg');
-  FSamples[7] := LoadSample('arc/audio/sfx/thunder.ogg');
-  FSamples[8] := LoadSample('arc/audio/sfx/digthis.ogg');
-end;
-
-procedure TExample.OnShutdown;
-begin
-  UnloadAllSamples;
-  inherited;
-end;
-
-procedure TExample.OnClearFrame;
+procedure TBaseExample.OnStartup;
 begin
   inherited;
 end;
 
-procedure TExample.OnUpdateFrame(aDeltaTime: Double);
-begin
-  inherited;
-
-  if KeyboardPressed(KEY_1) then
-    PlaySample(FSamples[1], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_2) then
-    PlaySample(FSamples[2], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_3) then
-    PlaySample(FSamples[3], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_4) then
-  begin
-    if IsSamplePlaying(FSampleId) then
-      StopSample(FSampleId);
-    PlaySample(FSamples[0], 1, AUDIO_PAN_NONE, 1, True, @FSampleId);
-  end;
-
-  if KeyboardPressed(KEY_5) then
-    PlaySample(FSamples[4], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_6) then
-    PlaySample(FSamples[5], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_7) then
-    PlaySample(FSamples[6], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_8) then
-    PlaySample(FSamples[7], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_9) then
-    PlaySample(FSamples[8], 1, AUDIO_PAN_NONE, 1, False, nil);
-
-  if KeyboardPressed(KEY_0) then
-  begin
-    if IsSamplePlaying(FSampleId) then
-      StopSample(FSampleId);
-  end;
-
-end;
-
-procedure TExample.OnRenderFrame;
+procedure TBaseExample.OnShutdown;
 begin
   inherited;
 end;
 
-procedure TExample.OnRenderHUD;
+procedure TBaseExample.OnClearFrame;
 begin
   inherited;
-  HudText(DefaultFont, GREEN, haLeft, HudTextItem('1-9', 'Play sample'), []);
-  HudText(DefaultFont, GREEN, haLeft, HudTextItem('0', 'Stop looping sample'), []);
 end;
 
-procedure TExample.OnShowFrame;
+procedure TBaseExample.OnUpdateFrame(aDeltaTime: Double);
+begin
+  inherited;
+end;
+
+procedure TBaseExample.OnRenderFrame;
+begin
+  inherited;
+end;
+
+procedure TBaseExample.OnRenderHUD;
+begin
+  inherited;
+
+end;
+
+procedure TBaseExample.OnShowFrame;
 begin
   inherited;
 end;

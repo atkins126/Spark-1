@@ -56,25 +56,16 @@ unit uExample;
 interface
 
 uses
-  Spark;
-
-const
-  cWindowWidth      = 960;
-  cWindowHeight     = 540;
-  cWindowTitle      = 'Spark Example';
-  cWindowFullscreen = False;
-  cFontSize         = 16;
-  cArchivePassword  = 'a15bef2d07b24a589c3d78d5ba341a94';
-  cArchiveFilename  = 'Data.zip';
-
+  Spark,
+  uBaseExample;
 
 type
   { TExample }
-  TExample = class(TGame)
-  protected
-    FWindowClearColor: TColor;
-    FFont: Int64;
+  TExample = class(TBaseExample)
   public
+    procedure OnGetSettings(var aSettings: TGame.TSettings); override;
+    procedure OnLoadConfig; override;
+    procedure OnSaveConfig; override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnClearFrame; override;
@@ -92,56 +83,59 @@ implementation
 { Routines }
 procedure RunExample;
 begin
-  RunGame(TExample);
+  RunGame(TBaseExample);
 end;
 
 { TExample }
+procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+begin
+  inherited;
+end;
+
+procedure TExample.OnLoadConfig;
+begin
+  inherited;
+end;
+
+procedure TExample.OnSaveConfig;
+begin
+  inherited;
+end;
+
 procedure TExample.OnStartup;
 begin
-  OpenZipArc(cArchivePassword, cArchiveFilename);
-  FWindowClearColor := DARKSLATEBROWN;
-  OpenWindow(cWindowWidth, cWindowHeight, cWindowTitle, cWindowFullscreen);
-  FFont := LoadFont(cFontSize);
+  inherited;
 end;
 
 procedure TExample.OnShutdown;
 begin
-  UnloadFont(FFont);
-  CloseWindow;
+  inherited;
 end;
 
 procedure TExample.OnClearFrame;
 begin
-  ClearWindow(FWindowClearColor);
+  inherited;
 end;
 
 procedure TExample.OnUpdateFrame(aDeltaTime: Double);
 begin
-  if KeyboardPressed(KEY_ESCAPE) then
-    SetTerminated(True);
-
-  if KeyboardPressed(KEY_F10) then
-    ToggleFullscreenWindow;
-
+  inherited;
 end;
 
 procedure TExample.OnRenderFrame;
 begin
+  inherited;
 end;
 
 procedure TExample.OnRenderHUD;
 begin
-  HudPos(3, 3);
-  HudText(FFont, WHITE, haLeft, 'fps %d', [GetFrameRate]);
-  HudText(FFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
-  HudText(FFont, GREEN, haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
+  inherited;
+
 end;
 
 procedure TExample.OnShowFrame;
 begin
-  ShowWindow;
+  inherited;
 end;
-
-
 
 end.

@@ -634,10 +634,23 @@ type
   end;
 
 { --- GAME ------------------------------------------------------------------ }
-type
+
   { TGame }
   TGame = class
+  type
+    PSettings = ^TSettings;
+    TSettings = record
+      WindowWidth: Integer;
+      WindowHeight: Integer;
+      WindowTitle: string;
+      WindowFullscreen: Boolean;
+      WindowClearColor: TColor;
+      ArchivePassword: string;
+      ArchiveFilename: string;
+      DefaultFontSize: Integer;
+    end;
   private
+    FSettings: TSettings;
     constructor Create; virtual;
   protected
     FEvent: ALLEGRO_EVENT;
@@ -646,6 +659,8 @@ type
     FCosTable: array [0 .. 360] of Single;
     FSinTable: array [0 .. 360] of Single;
     FIDCounter: Int64;
+    FDefaultFont: Int64;
+    FMousePos: TVector;
     // Window
     FWindow: record
       Handle: PALLEGRO_DISPLAY;
@@ -725,6 +740,10 @@ type
     procedure OpenLog;
     procedure CloseLog;
   public
+    property Settings: TSettings read FSettings;
+    property MousePos: TVector read FMousePos;
+    property DefaultFont: Int64 read FDefaultFont;
+
     destructor Destroy; override;
 
     // Log
@@ -923,6 +942,9 @@ type
     // Game
     procedure SetTerminated(aTerminated: Boolean);
     function  GetTerminated: Boolean;
+    procedure OnGetSettings(var aSettings: TSettings); virtual;
+    procedure OnLoadConfig; virtual;
+    procedure OnSaveConfig; virtual;
     procedure OnStartup; virtual;
     procedure OnShutdown; virtual;
     procedure OnClearFrame; virtual;
@@ -3958,23 +3980,59 @@ begin
   Result := FTerminated;
 end;
 
+procedure TGame.OnGetSettings(var aSettings: TSettings);
+begin
+  FSettings.WindowWidth := 960;
+  FSettings.WindowHeight := 540;
+  FSettings.WindowTitle := 'TGame';
+  FSettings.WindowFullscreen := False;
+  FSettings.WindowClearColor := DARKSLATEBROWN;
+  FSettings.ArchivePassword := '';
+  FSettings.ArchiveFilename := '';
+  FSettings.DefaultFontSize := 16;
+end;
+
+procedure TGame.OnLoadConfig;
+begin
+end;
+
+procedure TGame.OnSaveConfig;
+begin
+end;
+
 procedure TGame.OnStartup;
 begin
-  OpenWindow(960, 540, 'TGame');
+  if not FSettings.ArchiveFilename.IsEmpty then
+    OpenZipArc(FSettings.ArchivePassword, FSettings.ArchiveFilename);
+
+  OpenWindow(FSettings.WindowWidth, FSettings.WindowHeight,
+    FSettings.WindowTitle, FSettings.WindowFullscreen);
+
+  if FSettings.DefaultFontSize > 0 then
+    FDefaultFont := LoadFont(FSettings.DefaultFontSize);
 end;
 
 procedure TGame.OnShutdown;
 begin
+  UnloadFont(FDefaultFont);
   CloseWindow;
+  CloseZipArc;
 end;
 
 procedure TGame.OnUpdateFrame(aDeltaTime: Double);
 begin
+  MouseGetInfo(FMousePos);
+
+  if KeyboardPressed(KEY_ESCAPE) then
+    SetTerminated(True);
+
+  if KeyboardPressed(KEY_F10) then
+    ToggleFullscreenWindow;
 end;
 
 procedure TGame.OnClearFrame;
 begin
-  ClearWindow(DARKSLATEBROWN);
+  ClearWindow(FSettings.WindowClearColor);
 end;
 
 procedure TGame.OnRenderFrame;
@@ -3984,7 +4042,9 @@ end;
 procedure TGame.OnRenderHUD;
 begin
   HudPos(3, 3);
-  //PrintText(FFont, 3, 3, WHITE, haLeft, 'fps %d', [GetFrameRate]);
+  HudText(FDefaultFont, WHITE, haLeft, 'fps %d', [GetFrameRate]);
+  HudText(FDefaultFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
+  HudText(FDefaultFont, GREEN, haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
 end;
 
 procedure TGame.OnShowFrame;
@@ -3998,6 +4058,8 @@ begin
   FWindow.Ready := False;
 
   try
+    OnGetSettings(FSettings);
+    OnLoadConfig;
     OnStartup;
     ClearInput;
     if IsWindowOpen then
@@ -4119,8 +4181,9 @@ begin
 
   finally
     ClearInput;
-    OnShutdown;
     ClearAudio;
+    OnShutdown;
+    OnSaveConfig;
   end;
 
 end;

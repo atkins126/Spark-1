@@ -56,28 +56,21 @@ unit uViewport;
 interface
 
 uses
-  Spark;
-
-const
-  cWindowWidth      = 960;
-  cWindowHeight     = 540;
-  cWindowTitle      = 'Spark Viewport';
-  cWindowFullscreen = False;
-  cFontSize         = 16;
-  cArchivePassword  = 'a15bef2d07b24a589c3d78d5ba341a94';
-  cArchiveFilename  = 'Data.zip';
+  Spark,
+  uBaseExample;
 
 type
   { TExample }
-  TExample = class(TGame)
+  TExample = class(TBaseExample)
   protected
-    FWindowClearColor: TColor;
-    FFont: Int64;
     FViewport: Int64;
     FBackground: Int64;
     FSpeed: Single;
     FAngle: Single;
   public
+    procedure OnGetSettings(var aSettings: TGame.TSettings); override;
+    procedure OnLoadConfig; override;
+    procedure OnSaveConfig; override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnClearFrame; override;
@@ -99,14 +92,27 @@ begin
 end;
 
 { TExample }
+procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+begin
+  inherited;
+  aSettings.WindowTitle := 'Viewport Example';
+end;
+
+procedure TExample.OnLoadConfig;
+begin
+  inherited;
+end;
+
+procedure TExample.OnSaveConfig;
+begin
+  inherited;
+end;
+
+
 procedure TExample.OnStartup;
 begin
-  OpenZipArc(cArchivePassword, cArchiveFilename);
-  FWindowClearColor := DARKSLATEBROWN;
-  OpenWindow(cWindowWidth, cWindowHeight, cWindowTitle, cWindowFullscreen);
-  FFont := LoadFont(cFontSize);
-
-  FViewport := CreateViewport((cWindowWidth - 380) div 2, (cWindowHeight - 280) div 2,  380, 280);
+  inherited;
+  FViewport := CreateViewport((Settings.WindowWidth - 380) div 2, (Settings.WindowHeight - 280) div 2,  380, 280);
   FBackground := LoadBitmap('arc/bitmaps/backgrounds/bluestone.png', nil);
 end;
 
@@ -114,23 +120,17 @@ procedure TExample.OnShutdown;
 begin
   UnloadAllBitmaps;
   DestroyAllViewports;
-  UnloadFont(FFont);
-  CloseWindow;
-  CloseZipArc;
+  inherited;
 end;
 
 procedure TExample.OnClearFrame;
 begin
-  ClearWindow(FWindowClearColor);
+  inherited;
 end;
 
 procedure TExample.OnUpdateFrame(aDeltaTime: Double);
 begin
-  if KeyboardPressed(KEY_ESCAPE) then
-    SetTerminated(True);
-
-  if KeyboardPressed(KEY_F10) then
-    ToggleFullscreenWindow;
+  inherited;
 
   FSpeed := FSpeed + (60 * aDeltaTime);
   FAngle := FAngle + (7 * aDeltaTime);
@@ -142,26 +142,25 @@ procedure TExample.OnRenderFrame;
 var
   LWidth: Integer;
 begin
+  inherited;
+
   SetWindowViewport(FViewport);
   GetWindowViewportSize(nil, nil, @LWidth, nil);
 
   ClearWindow(SKYBLUE);
   DrawTiledBitmap(FBackground, 0, FSpeed);
-  PrintText(FFont, LWidth div 2, 3, WHITE, haCenter, 'Viewport', []);
+  PrintText(DefaultFont, LWidth div 2, 3, WHITE, haCenter, 'Viewport', []);
   SetWindowViewport(ID_NIL);
 end;
 
 procedure TExample.OnRenderHUD;
 begin
-  HudPos(3, 3);
-  HudText(FFont, WHITE, haLeft, 'fps %d', [GetFrameRate]);
-  HudText(FFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
-  HudText(FFont, GREEN, haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
+  inherited;
 end;
 
 procedure TExample.OnShowFrame;
 begin
-  ShowWindow;
+  inherited;
 end;
 
 

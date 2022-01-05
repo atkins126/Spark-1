@@ -56,25 +56,18 @@ unit uFont;
 interface
 
 uses
-  Spark;
-
-const
-  cWindowWidth      = 960;
-  cWindowHeight     = 540;
-  cWindowTitle      = 'Spark Font';
-  cWindowFullscreen = False;
-  cFontSize         = 16;
-  cArchivePassword  = 'a15bef2d07b24a589c3d78d5ba341a94';
-  cArchiveFilename  = 'Data.zip';
+  Spark,
+  uBaseExample;
 
 type
   { TExample }
-  TExample = class(TGame)
+  TExample = class(TBaseExample)
   protected
-    FWindowClearColor: TColor;
-    FFont: Int64;
     FUnicodeFont: Int64;
   public
+    procedure OnGetSettings(var aSettings: TGame.TSettings); override;
+    procedure OnLoadConfig; override;
+    procedure OnSaveConfig; override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnClearFrame; override;
@@ -96,56 +89,60 @@ begin
 end;
 
 { TExample }
+procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+begin
+  inherited;
+  aSettings.WindowTitle := 'Font Example';
+end;
+
+procedure TExample.OnLoadConfig;
+begin
+  inherited;
+end;
+
+procedure TExample.OnSaveConfig;
+begin
+  inherited;
+end;
+
 procedure TExample.OnStartup;
 begin
-  OpenZipArc(cArchivePassword, cArchiveFilename);
-  FWindowClearColor := DARKSLATEBROWN;
-  OpenWindow(cWindowWidth, cWindowHeight, cWindowTitle, cWindowFullscreen);
-  FFont := LoadFont(cFontSize);
+  inherited;
   FUnicodeFont := LoadFont(16, 'arc/fonts/default-mono.ttf');
 end;
 
 procedure TExample.OnShutdown;
 begin
   UnloadFont(FUnicodeFont);
-  UnloadFont(FFont);
-  CloseWindow;
-  CloseZipArc;
+  inherited;
 end;
 
 procedure TExample.OnClearFrame;
 begin
-  ClearWindow(FWindowClearColor);
+  inherited;
 end;
 
 procedure TExample.OnUpdateFrame(aDeltaTime: Double);
 begin
-  if KeyboardPressed(KEY_ESCAPE) then
-    SetTerminated(True);
-
-  if KeyboardPressed(KEY_F10) then
-    ToggleFullscreenWindow;
-
+  inherited;
 end;
 
 procedure TExample.OnRenderFrame;
 begin
+  inherited;
 end;
 
 procedure TExample.OnRenderHUD;
 begin
-  HudPos(3, 3);
-  HudText(FFont, WHITE, haLeft, 'fps %d', [GetFrameRate]);
-  HudText(FFont, GREEN, haLeft, HudTextItem('ESC', 'Quit'), []);
-  HudText(FFont, GREEN, haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
+  inherited;
 
-  PrintText(FUnicodeFont, cWindowWidth div 2, cWindowHeight div 2, YELLOW, haCenter, ' en   zh      ja       ko        de   es   pt     fr      vi    id', []);
-  PrintText(FUnicodeFont, cWindowWidth div 2, (cWindowHeight div 2)+18, GREEN, haCenter, 'Hello|你好|こんにちは|안녕하세요|Hallo|Hola|Olá|Bonjour|Xin chào|Halo', []);
+  PrintText(FUnicodeFont, Settings.WindowWidth div 2, Settings.WindowHeight div 2, YELLOW, haCenter, ' en   zh      ja       ko        de   es   pt     fr      vi    id', []);
+  PrintText(FUnicodeFont, Settings.WindowWidth div 2, (Settings.WindowHeight div 2)+18, GREEN, haCenter, 'Hello|你好|こんにちは|안녕하세요|Hallo|Hola|Olá|Bonjour|Xin chào|Halo', []);
 end;
 
 procedure TExample.OnShowFrame;
 begin
-  ShowWindow;
+  inherited;
 end;
 
 

@@ -56,29 +56,24 @@ unit uBitmap;
 interface
 
 uses
-  Spark;
+  Spark,
+  uBaseExample;
 
 const
-  cWindowWidth      = 960;
-  cWindowHeight     = 540;
-  cWindowTitle      = 'Spark Bitmap';
-  cWindowFullscreen = False;
-  cFontSize         = 16;
-  cArchivePassword  = 'a15bef2d07b24a589c3d78d5ba341a94';
-  cArchiveFilename  = 'Data.zip';
   cScrollSpeed      = 30;
   cActionStr: array[0..3] of string = ('Align Bitmap', 'Tiled Bitmap', 'ColorKey Transparent Bitmap', 'Native Transparent Bitmap');
 
 type
   { TExample }
-  TExample = class(TGame)
+  TExample = class(TBaseExample)
   protected
-    FWindowClearColor: TColor;
-    FFont: Int64;
     FBmp: array[0..4] of Int64;
     FAction: Integer;
     FScrollPos: TVector;
   public
+    procedure OnGetSettings(var aSettings: TGame.TSettings); override;
+    procedure OnLoadConfig; override;
+    procedure OnSaveConfig; override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnClearFrame; override;
@@ -100,12 +95,25 @@ begin
 end;
 
 { TExample }
+procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+begin
+  inherited;
+  aSettings.WindowTitle := 'Bitmap Example';
+end;
+
+procedure TExample.OnLoadConfig;
+begin
+  inherited;
+end;
+
+procedure TExample.OnSaveConfig;
+begin
+  inherited;
+end;
+
 procedure TExample.OnStartup;
 begin
-  OpenZipArc(cArchivePassword, cArchiveFilename);
-  FWindowClearColor := DARKSLATEBROWN;
-  OpenWindow(cWindowWidth, cWindowHeight, cWindowTitle, cWindowFullscreen);
-  FFont := LoadFont(cFontSize);
+  inherited;
 
   FBmp[0] := LoadBitmap('arc/bitmaps/sprites/square00.png', @COLORKEY);
   FBmp[1] := LoadBitmap('arc/bitmaps/backgrounds/nebula2.png', nil);
@@ -114,29 +122,23 @@ begin
   FBmp[4] := LoadBitmap('arc/bitmaps/sprites/alphacheese.png', nil);
 
   FScrollPos.Assign(0, 0);
-  FAction := 0;
+  FAction := 1;
 end;
 
 procedure TExample.OnShutdown;
 begin
   UnloadAllBitmaps;
-  UnloadFont(FFont);
-  CloseWindow;
-  CloseZipArc;
+  inherited;
 end;
 
 procedure TExample.OnClearFrame;
 begin
-  ClearWindow(FWindowClearColor);
+  inherited;
 end;
 
 procedure TExample.OnUpdateFrame(aDeltaTime: Double);
 begin
-  if KeyboardPressed(KEY_ESCAPE) then
-    SetTerminated(True);
-
-  if KeyboardPressed(KEY_F10) then
-    ToggleFullscreenWindow;
+  inherited;
 
   if KeyboardPressed(KEY_1) then
     FAction := 0;
@@ -177,32 +179,34 @@ end;
 
 procedure TExample.OnRenderFrame;
 begin
+  inherited;
+
   case FAction of
     0: // align bitmap
     begin
       var LCenterPos: TVector;
-      LCenterPos.Assign(cWindowWidth/2, cWindowHeight/2);
+      LCenterPos.Assign(Settings.WindowWidth/2, Settings.WindowHeight/2);
 
-      DrawLine(LCenterPos.X, 0, LCenterPos.X, cWindowHeight, YELLOW, 1);
-      DrawLine(0, LCenterPos.Y, cWindowWidth,  LCenterPos.Y, YELLOW, 1);
+      DrawLine(LCenterPos.X, 0, LCenterPos.X, Settings.WindowHeight, YELLOW, 1);
+      DrawLine(0, LCenterPos.Y, Settings.WindowWidth,  LCenterPos.Y, YELLOW, 1);
 
       DrawBitmap(FBmp[0], LCenterPos.X, LCenterPos.Y, 1, 0, WHITE, haCenter, vaCenter);
-      PrintText(FFont, LCenterPos.X, LCenterPos.Y+25, DARKGREEN, haCenter, 'center-center', []);
+      PrintText(DefaultFont, LCenterPos.X, LCenterPos.Y+25, DARKGREEN, haCenter, 'center-center', []);
 
-      DrawLine(0, LCenterPos.Y-128, cWindowWidth,  LCenterPos.Y-128, YELLOW, 1);
+      DrawLine(0, LCenterPos.Y-128, Settings.WindowWidth,  LCenterPos.Y-128, YELLOW, 1);
 
       DrawBitmap(FBmp[0], LCenterPos.X, LCenterPos.Y-128, 1, 0, WHITE, haLeft, vaTop);
-      PrintText(FFont, LCenterPos.X+34, LCenterPos.Y-(128-6), DARKGREEN, haLeft, 'left-top', []);
+      PrintText(DefaultFont, LCenterPos.X+34, LCenterPos.Y-(128-6), DARKGREEN, haLeft, 'left-top', []);
 
       DrawBitmap(FBmp[0], LCenterPos.X, LCenterPos.Y-128, 1, 0, WHITE, haLeft, vaBottom);
-      PrintText(FFont, LCenterPos.X+34, LCenterPos.Y-(128+25), DARKGREEN, haLeft, 'left-bottom', []);
+      PrintText(DefaultFont, LCenterPos.X+34, LCenterPos.Y-(128+25), DARKGREEN, haLeft, 'left-bottom', []);
 
-      DrawLine(0, LCenterPos.Y+128, cWindowWidth,  LCenterPos.Y+128, YELLOW, 1);
+      DrawLine(0, LCenterPos.Y+128, Settings.WindowWidth,  LCenterPos.Y+128, YELLOW, 1);
       DrawBitmap(FBmp[0], LCenterPos.X, LCenterPos.Y+128, 1, 0, WHITE, haRight, vaTop);
-      PrintText(FFont, LCenterPos.X+4, LCenterPos.Y+(128+6), DARKGREEN, haLeft, 'right-top', []);
+      PrintText(DefaultFont, LCenterPos.X+4, LCenterPos.Y+(128+6), DARKGREEN, haLeft, 'right-top', []);
 
       DrawBitmap(FBmp[0], LCenterPos.X, LCenterPos.Y+128, 1, 0, WHITE, haRight, vaBottom);
-      PrintText(FFont, LCenterPos.X+4, LCenterPos.Y+(128-27), DARKGREEN, haLeft, 'right-bottom', []);
+      PrintText(DefaultFont, LCenterPos.X+4, LCenterPos.Y+(128-27), DARKGREEN, haLeft, 'right-bottom', []);
     end;
 
     1: // tiled bitmap
@@ -213,7 +217,7 @@ begin
     2: // colorkey transparent bitmap
     begin
       var LCenterPos: TVector;
-      LCenterPos.Assign(cWindowWidth/2, cWindowHeight/2);
+      LCenterPos.Assign(Settings.WindowWidth/2, Settings.WindowHeight/2);
 
       var LSize: TVector;
       GetBitmapSize(FBmp[2], LSize);
@@ -221,33 +225,30 @@ begin
       DrawBitmap(FBmp[2], LCenterPos.X, LCenterPos.Y-LSize.Y, 1.0, 0.0, WHITE, haCenter, vaCenter);
       DrawBitmap(FBmp[3], LCenterPos.X, LCenterPos.Y+LSize.Y, 1.0, 0.0, WHITE, haCenter, vaCenter);
 
-      PrintText(FFont, LCenterPos.X, LCenterPos.Y-(LSize.Y/2), DARKORANGE, haCenter, 'without colorkey', []);
-      PrintText(FFont, LCenterPos.X, LCenterPos.Y+(LSize.Y*1.5), DARKORANGE, haCenter, 'with colorkey', []);
+      PrintText(DefaultFont, LCenterPos.X, LCenterPos.Y-(LSize.Y/2), DARKORANGE, haCenter, 'without colorkey', []);
+      PrintText(DefaultFont, LCenterPos.X, LCenterPos.Y+(LSize.Y*1.5), DARKORANGE, haCenter, 'with colorkey', []);
     end;
 
     3: // native transparent bitmap
     begin
-      DrawBitmap(FBmp[4], cWindowWidth/2, cWindowHeight/2, 1, 0, WHITE, haCenter, vaCenter);
+      DrawBitmap(FBmp[4], Settings.WindowWidth/2, Settings.WindowHeight/2, 1, 0, WHITE, haCenter, vaCenter);
       var LSize: TVector;
       GetBitmapSize(FBmp[4], LSize);
-      PrintText(FFont, cWindowWidth/2, (cWindowHeight/2)+(LSize.Y/3.5), DARKORANGE, haCenter, 'Native transparency', []);
+      PrintText(DefaultFont, Settings.WindowWidth/2, (Settings.WindowHeight/2)+(LSize.Y/3.5), DARKORANGE, haCenter, 'Native transparency', []);
     end;
   end;
 end;
 
 procedure TExample.OnRenderHUD;
 begin
-  HudPos(3, 3);
-  HudText(FFont, WHITE,  haLeft, 'fps %d', [GetFrameRate]);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('ESC', 'Quit'), []);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('1-4', 'Bitmap Action'), []);
-  HudText(FFont, ORANGE, haLeft, HudTextItem('Action:', '%s', ' '), [cActionStr[FAction]]);
+  inherited;
+  HudText(DefaultFont, GREEN,  haLeft, HudTextItem('1-4', 'Bitmap Action'), []);
+  HudText(DefaultFont, ORANGE, haLeft, HudTextItem('Action:', '%s', ' '), [cActionStr[FAction]]);
 end;
 
 procedure TExample.OnShowFrame;
 begin
-  ShowWindow;
+  inherited;
 end;
 
 

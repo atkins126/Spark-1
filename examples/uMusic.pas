@@ -57,27 +57,20 @@ interface
 
 uses
   System.SysUtils,
-  Spark;
-
-const
-  cWindowWidth      = 960;
-  cWindowHeight     = 540;
-  cWindowTitle      = 'Spark Example';
-  cWindowFullscreen = False;
-  cFontSize         = 16;
-  cArchivePassword  = 'a15bef2d07b24a589c3d78d5ba341a94';
-  cArchiveFilename  = 'Data.zip';
+  Spark,
+  uBaseExample;
 
 type
   { TExample }
-  TExample = class(TGame)
+  TExample = class(TBaseExample)
   protected
-    FWindowClearColor: TColor;
-    FFont: Int64;
     FFilename: string;
     FNum: Integer;
     procedure Play(aNum: Integer; aVol: Single);
   public
+    procedure OnGetSettings(var aSettings: TGame.TSettings); override;
+    procedure OnLoadConfig; override;
+    procedure OnSaveConfig; override;
     procedure OnStartup; override;
     procedure OnShutdown; override;
     procedure OnClearFrame; override;
@@ -110,12 +103,26 @@ begin
   PlayMusic(aVol, True);
 end;
 
+procedure TExample.OnGetSettings(var aSettings: TGame.TSettings);
+begin
+  inherited;
+  aSettings.WindowTitle := 'Music Example';
+end;
+
+procedure TExample.OnLoadConfig;
+begin
+  inherited;
+end;
+
+procedure TExample.OnSaveConfig;
+begin
+  inherited;
+end;
+
 procedure TExample.OnStartup;
 begin
-  OpenZipArc(cArchivePassword, cArchiveFilename);
-  FWindowClearColor := DARKSLATEBROWN;
-  OpenWindow(cWindowWidth, cWindowHeight, cWindowTitle, cWindowFullscreen);
-  FFont := LoadFont(cFontSize);
+  inherited;
+
   FNum := 1;
   FFilename := '';
   Play(1, 1.0);
@@ -124,23 +131,18 @@ end;
 procedure TExample.OnShutdown;
 begin
   UnloadMusic;
-  UnloadFont(FFont);
-  CloseWindow;
-  CloseZipArc;
+
+  inherited;
 end;
 
 procedure TExample.OnClearFrame;
 begin
-  ClearWindow(FWindowClearColor);
+  inherited;
 end;
 
 procedure TExample.OnUpdateFrame(aDeltaTime: Double);
 begin
-  if KeyboardPressed(KEY_ESCAPE) then
-    SetTerminated(True);
-
-  if KeyboardPressed(KEY_F10) then
-    ToggleFullscreenWindow;
+  inherited;
 
   if KeyboardPressed(KEY_UP) then
   begin
@@ -157,27 +159,23 @@ begin
       FNum := 13;
     Play(FNum, 1.0);
   end
-
 end;
 
 procedure TExample.OnRenderFrame;
 begin
+  inherited;
 end;
 
 procedure TExample.OnRenderHUD;
 begin
-  HudPos(3, 3);
-  HudText(FFont, WHITE,  haLeft, 'fps %d', [GetFrameRate]);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('ESC', 'Quit'), []);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('F10', 'Toggle fullscreen'), []);
-  HudText(FFont, GREEN,  haLeft, HudTextItem('Up/Dn', 'Play sample'), []);
-  HudText(FFont, ORANGE, haLeft, HudTextItem('Song:', '%s', ' '), [TPath.GetFileName(FFilename)]);
-
+  inherited;
+  HudText(DefaultFont, GREEN,  haLeft, HudTextItem('Up/Dn', 'Play sample'), []);
+  HudText(DefaultFont, ORANGE, haLeft, HudTextItem('Song:', '%s', ' '), [TPath.GetFileName(FFilename)]);
 end;
 
 procedure TExample.OnShowFrame;
 begin
-  ShowWindow;
+  inherited;
 end;
 
 
